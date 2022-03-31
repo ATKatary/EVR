@@ -1,1 +1,1 @@
-# EVSR
+# Enhanced Video Resolution
