@@ -1,1 +1,1 @@
-# Enhanced Video Resolution
+# Video Super Resolution Enhancement
