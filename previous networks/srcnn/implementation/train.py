@@ -28,7 +28,7 @@ def train_and_validate(device, val_inputs, val_labels, train_inputs, train_label
     Outputs
         :returns: the traind SRCNN model
     """
-    model = torch.nn.DataParallel(SRCNN()).to(device)
+    model = torch.nn.DataParallel(SRCNN(k=1)).to(device)
 
     val_data = SRCNNDataset(val_inputs, val_labels)
     train_data = SRCNNDataset(train_inputs, train_labels)
@@ -127,7 +127,7 @@ def _validate(model, dataloader, epoch, n, device, home_dir, criterion = nn.MSEL
             running_psnr += psnr(label, outputs)
 
         outputs = outputs.cpu()
-        save_image(outputs, f"{home_dir}/outputs/val_sr{epoch}.png")
+        save_image(outputs, f"{home_dir}/outputs/training/val_sr{epoch}.png")
 
     final_loss = running_loss / len(dataloader.dataset)
     final_psnr = running_psnr / int(n / batch_size)

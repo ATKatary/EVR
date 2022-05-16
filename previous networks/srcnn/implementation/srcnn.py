@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from implementation.srcnn_utils import zero_upsampling
 
 ### Classes ###
 class SRCNN(nn.Module):
@@ -23,9 +24,12 @@ class SRCNN(nn.Module):
             nn.Conv2d(32, c, kernel_size=5, padding=2, padding_mode='replicate')
         )
 
-    def forward(self, input):
-        """ Forward porpagation of input through the net """
-        return self.net(nn.Upsample(scale_factor=self.upscale_factor, mode="bilinear")(input))
+    def forward(self, input, mode = 'bilinear'):
+        """ Forward porpagation of input through the net with given upscaling mode (default bilinear) """
+        if mode == "zero": f = zero_upsampling
+        else: f = nn.Upsample(scale_factor=self.upscale_factor, mode=mode)
+        
+        return self.net(f(input))
     
     def initiate(self, device, pretrained_weights):
         """ Initializes the model using pretrained weights """

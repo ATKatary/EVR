@@ -31,7 +31,7 @@ def zero_upsampling(img: torch.Tensor, factors: int) -> torch.Tensor:
         :factors: <tuple<int>> of length 2 containing the factors, (n, m), of how much to upscale each dimension of the image by 
 
     Outputs
-        :returns: <Tensor> of the upsampled image with the same dimensions as the input img, i.e C x H x W or D x C x H x W
+        :returns: <Tensor> of the upsampled image with the same dimensions as the input img, i.e 1 x C x H x W or D x C x H x W
     """
     x = len(factors)
     img_size = list(img.shape)
@@ -45,7 +45,7 @@ def zero_upsampling(img: torch.Tensor, factors: int) -> torch.Tensor:
     if dim == 4: upscaled_img[:, :, ::n, ::m] = img
 
 
-    return torch.Tensor(upscaled_img)
+    return torch.Tensor(upscaled_img).unsqueeze(0)
 
 def create_video(frames, home_dir, scale_factor = 1):
     """

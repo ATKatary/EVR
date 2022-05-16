@@ -18,16 +18,16 @@ def test_image(model, device, home_dir, image_path = None):
     Outputs
         :returns: a tuple (before, after) of the path to the before and after images
     """
+    image_name = input("Image name: ")
     if image_path is None:
         image_url = input("Image url: ")
-        image_name = input("Image name: ")
         image_path = download(image_url, home_dir, fn=image_name)
-    else: image_name = "image1"
+
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = image.reshape(image.shape[0], image.shape[1], 3)
-    before_image_path = f"{home_dir}/outputs/before_{image_name}.png"
+    before_image_path = f"{home_dir}/inputs/images/before_{image_name}.png"
 
     cv2.imwrite(before_image_path, image)
     image = image / 255.0
@@ -38,7 +38,7 @@ def test_image(model, device, home_dir, image_path = None):
         image = torch.tensor(image, dtype=torch.float).to(device)
         image = image.unsqueeze(0)
         outputs = model(image).squeeze(0)
-        outputs_path = f"{home_dir}/outputs/after_{image_name}.png"
+        outputs_path = f"{home_dir}/outputs/images/after_{image_name}.png"
 
         outputs = outputs.cpu()
         save_image(outputs, outputs_path)
@@ -78,10 +78,9 @@ def test_video(model, device, home_dir, video_path = None, max_iters = None):
         if max_iters is not None:
             if iter_num > max_iters: break
 
-        input_path = f"{home_dir}/outputs/before_image1.png"
-        cv2.imwrite(input_path, frame)
+        input_path = f"{home_dir}/inputs/images/before_image1.png"
          
-        before_frame, after_frame = test_image(model, device, home_dir, image_path=input_path)
+        _, after_frame = test_image(model, device, home_dir, image_path=input_path)
         after_frame = cv2.imread(after_frame)
 
         resolved_frames.append(after_frame)
