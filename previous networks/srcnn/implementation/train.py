@@ -1,3 +1,4 @@
+import cv2
 import time
 import torch
 import numpy as np
@@ -7,6 +8,7 @@ from .srcnn import SRCNN
 import torch.optim as optim
 from .loss_functions import psnr
 from .data_utils import SRCNNDataset
+from torchvision.utils import make_grid
 from torchvision.utils import save_image
 
 ### Functions ###
@@ -42,8 +44,8 @@ def train_and_validate(device, val_inputs, val_labels, train_inputs, train_label
         train_epoch_loss, train_epoch_psnr = _train(model, train_loader, len(train_data), device, lr)
         val_epoch_loss, val_epoch_psnr = _validate(model, val_loader, epoch, len(val_data), device, home_dir)
 
-        print(f"Train PSNR: {train_epoch_psnr:.3f}")
-        print(f"Val PSNR: {val_epoch_psnr:.3f}")
+        print(f"Training: Gen Loss: {train_epoch_loss:.3f}\tPSNR: {train_epoch_psnr:.3f}")
+        print(f"Training: Gen Loss: {val_epoch_loss:.3f}\tPSNR: {val_epoch_psnr:.3f}")
 
     end = time.time()
     print(f"Finished training in: {((end-start)/60):.3f} minutes\nSaving model ...")
@@ -91,7 +93,7 @@ def _train(model, dataloader, n, device, lr, optimizer = None, criterion = nn.MS
         running_psnr += psnr(label, outputs)
 
     final_loss = running_loss / len(dataloader.dataset)
-    final_psnr = running_psnr / int(n / batch_size)
+    final_psnr = running_psnr / len(dataloader)
     return final_loss, final_psnr
 
 def _validate(model, dataloader, epoch, n, device, home_dir, criterion = nn.MSELoss()):
@@ -120,15 +122,30 @@ def _validate(model, dataloader, epoch, n, device, home_dir, criterion = nn.MSEL
             image_data = data[0].to(device)
             label = data[1].to(device)
             
-            outputs = model(image_data)
-            loss = criterion(outputs, label)
+            output = model(image_data)
+            loss = criterion(output, label)
 
             running_loss += loss.item()
-            running_psnr += psnr(label, outputs)
+            running_psnr += psnr(label, output)
 
-        outputs = outputs.cpu()
-        save_image(outputs, f"{home_dir}/outputs/training/val_sr{epoch}.png")
+        output = output.cpu()
+        if epoch % 10 == 0:
+            _store(f"{home_dir}/outputs/training/labels/train{epoch}.png", label)
+            _store(f"{home_dir}/outputs/training/super_res/train{epoch}.png", output)
+            _store(f"{home_dir}/outputs/training/low_res/train{epoch}.png", image_data)
 
     final_loss = running_loss / len(dataloader.dataset)
-    final_psnr = running_psnr / int(n / batch_size)
+    final_psnr = running_psnr / len(dataloader)
     return final_loss, final_psnr
+
+def _store(path, image):
+    """
+    Stores the passed in image tensor at the path
+
+    Inputs
+    :path: <str> path of location to save the image tensor in
+    :image: <torch.Tensor> representing the image with dimensions (c, w, h)
+    """
+    image = make_grid(image.detach().cpu(), padding=2, normalize=True).numpy()
+    image = (image.transpose(1, 2, 0) * 255).astype(np.uint8)
+    cv2.imwrite(path, image)
